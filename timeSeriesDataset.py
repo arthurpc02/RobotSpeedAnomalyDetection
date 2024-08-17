@@ -2,9 +2,9 @@ import requests
 import pandas as pd
 from io import StringIO
 import matplotlib.pyplot as plt
-%matplotlib inline
 
-def receive_data_in_chunks(desiredChunkSize=1000):
+
+def receive_data_in_chunks(desiredChunkSize=10000):
     """Simulates a stream of continuous data"""
 
     chunk = []
@@ -37,8 +37,10 @@ def detect_anomalies_zscore(data, threshold=3):
     
     z_scores = (data - mean) / std
     anomalies = z_scores.abs() > threshold
-    
-    return pd.DataFrame({'Data': data, 'Z-Score': z_scores, 'Anomaly': anomalies})
+
+    anomaly_df = pd.DataFrame({'Data': data, 'Z-Score': z_scores, 'Anomaly': anomalies})
+
+    return anomaly_df, mean, std
 
 
 def plot_data_with_anomalies(data):
@@ -58,6 +60,9 @@ def plot_data_with_anomalies(data):
     plt.ylabel('Speed')
     plt.legend()
 
+    # Save the plot as an image file
+    plt.savefig('speed_data_with_anomalies.png')
+
     # Show the plot
     plt.show()
 
@@ -73,9 +78,11 @@ dataFrame = pd.read_csv(StringIO(csv_data))
 # 2. Anomaly Detection
 ##########################################
 
-anomaly_df = detect_anomalies_zscore(dataFrame['speed'])
+anomalies_output = detect_anomalies_zscore(dataFrame['speed'])
+anomaly_df = anomalies_output[0]
 anomaly_count = anomaly_df['Anomaly'].sum()
-
+spd_mean = anomalies_output[1]
+spd_std = anomalies_output[2]
 
 
 ##########################################
@@ -90,6 +97,8 @@ print(dataFrame.info())
 # print(anomaly_df)
 # print(anomaly_df.info())
 print(f'anomaly count: {anomaly_count}')
+print(f'mean: {spd_mean}')
+print(f'std dev.: {spd_std}')
 
 
 ##########################################
