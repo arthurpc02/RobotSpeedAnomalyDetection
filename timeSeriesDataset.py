@@ -5,7 +5,7 @@ from io import StringIO
 ##########################################
 # 1. Stream Data
 ##########################################
-def receiveDataInChunks(desiredChunkSize=10):
+def receive_data_in_chunks(desiredChunkSize=1000):
     """Simulates a stream of continuous data"""
 
     chunk = []
@@ -21,11 +21,8 @@ def receiveDataInChunks(desiredChunkSize=10):
     
     return chunk
 
-print(receiveDataInChunks())
-
-# csv = stream.content
-
-# dataset = pd.read_csv(StringIO(stream.text))
+csv_data = "\n".join(receive_data_in_chunks())
+dataFrame = pd.read_csv(StringIO(csv_data))
 
 
 
@@ -43,5 +40,5 @@ print(receiveDataInChunks())
 # 4. Code Submission
 ##########################################
 
-# print(dataset)
-# print(dataset.info())
+print(dataFrame)
+print(dataFrame.info())
