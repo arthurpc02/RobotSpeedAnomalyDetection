@@ -49,7 +49,10 @@ def detect_anomalies_zscore(df, threshold=3):
     - threshold: Z-score threshold for detecting anomalies.
     
     Returns:
-    - A DataFrame with the original columns plus an additional 'Anomaly' column.
+    - anomaly_df: A DataFrame with the original columns plus an additional 'Anomaly' column.
+    - mean: The mean of the 'speed' column.
+    - std: The standard deviation of the 'speed' column.
+    - anomalies_with_timestamp_df: A DataFrame containing only the anomalies with their corresponding timestamps.
     """
     data = df['speed']
     mean = data.mean()
@@ -58,11 +61,16 @@ def detect_anomalies_zscore(df, threshold=3):
     z_scores = (data - mean) / std
     anomalies = z_scores.abs() > threshold
 
-    anomaly_df = df.copy()  # Copy the original DataFrame to include all columns
+    # Create a DataFrame with anomalies and corresponding timestamps
+    anomalies_with_timestamp_df = df[anomalies].copy()
+    anomalies_with_timestamp_df['Z-Score'] = z_scores[anomalies]
+    
+    # Add 'Z-Score' and 'Anomaly' columns to the original DataFrame
+    anomaly_df = df.copy()
     anomaly_df['Z-Score'] = z_scores
     anomaly_df['Anomaly'] = anomalies
 
-    return anomaly_df, mean, std
+    return anomaly_df, mean, std, anomalies_with_timestamp_df
 
 
 def plot_data_with_anomalies(anomalyResults):
