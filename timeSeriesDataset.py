@@ -31,28 +31,30 @@ def stream_data(queue, input_data, increment=2):
     return
 
 
-def zscore_anomaly_detection(dataFrame):
-    anomalies_output = detect_anomalies_zscore(dataFrame)
+def zscore_anomaly_detection(dataFrame, anomaly_dataframe_count):
+    anomalies_output = detect_anomalies_zscore(dataFrame, anomaly_dataframe_count)
     anomaly_df = anomalies_output[0]
     spd_mean = anomalies_output[1]
     spd_std = anomalies_output[2]
     anomaly_count = anomaly_df['Anomaly'].sum()
+    anomalies_df_count = anomalies_output[3]
 
-    return {'anomaly_df': anomaly_df, 'mean': spd_mean, 'std': spd_std, 'count': anomaly_count}
+    return {'anomaly_df': anomaly_df, 'mean': spd_mean, 'std': spd_std, 'count': anomaly_count, 'df_count': anomalies_df_count}
 
-def detect_anomalies_zscore(df, threshold=3):
+def detect_anomalies_zscore(df, anomalies_with_timestamp_df=None, threshold=3):
     """
-    Detect anomalies using the Z-score method.
+    Detect anomalies using the Z-score method and append them to the existing anomalies DataFrame.
     
     Parameters:
     - df: A pandas DataFrame containing the time-series data.
+    - anomalies_with_timestamp_df: A DataFrame to which new anomalies will be appended. If None, a new DataFrame is created.
     - threshold: Z-score threshold for detecting anomalies.
     
     Returns:
     - anomaly_df: A DataFrame with the original columns plus an additional 'Anomaly' column.
     - mean: The mean of the 'speed' column.
     - std: The standard deviation of the 'speed' column.
-    - anomalies_with_timestamp_df: A DataFrame containing only the anomalies with their corresponding timestamps.
+    - updated_anomalies_with_timestamp_df: The updated DataFrame containing all anomalies with their corresponding timestamps.
     """
     data = df['speed']
     mean = data.mean()
@@ -61,16 +63,27 @@ def detect_anomalies_zscore(df, threshold=3):
     z_scores = (data - mean) / std
     anomalies = z_scores.abs() > threshold
 
-    # Create a DataFrame with anomalies and corresponding timestamps
-    anomalies_with_timestamp_df = df[anomalies].copy()
-    anomalies_with_timestamp_df['Z-Score'] = z_scores[anomalies]
+    # Extract new anomalies
+    new_anomalies = df[anomalies].copy()
+    new_anomalies['Z-Score'] = z_scores[anomalies]
+    
+    # Initialize the anomalies DataFrame if it's None
+    if anomalies_with_timestamp_df is None:
+        anomalies_with_timestamp_df = pd.DataFrame(columns=df.columns)
+        anomalies_with_timestamp_df['Z-Score'] = pd.Series(dtype='float64')
+    
+    # Append new anomalies to the existing DataFrame
+    updated_anomalies_with_timestamp_df = pd.concat([anomalies_with_timestamp_df, new_anomalies])
     
     # Add 'Z-Score' and 'Anomaly' columns to the original DataFrame
     anomaly_df = df.copy()
     anomaly_df['Z-Score'] = z_scores
     anomaly_df['Anomaly'] = anomalies
 
-    return anomaly_df, mean, std, anomalies_with_timestamp_df
+    print(updated_anomalies_with_timestamp_df)
+    print(updated_anomalies_with_timestamp_df.info())
+
+    return anomaly_df, mean, std, updated_anomalies_with_timestamp_df
 
 
 def plot_data_with_anomalies(anomalyResults):
@@ -120,7 +133,8 @@ def plot_data_with_anomalies(anomalyResults):
 
 url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
 window_frame = 10000
-increment = 1000
+increment = 10000
+anomaly_df_count = None
 
 data_list = receive_data_as_a_list(url)
 csv_headers = data_list.pop(0)
@@ -134,7 +148,8 @@ stream_data(streamed_queue, data_list, window_frame)
 # to do: wrap the data analysis in a function, because it's repeating
 csv_data = queue_to_csv(streamed_queue, csv_headers)
 dataFrame = pd.read_csv(csv_data)
-anomalyResults = zscore_anomaly_detection(dataFrame)
+anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_df_count)
+anomaly_df_count = anomalyResults['df_count']
 
 print(dataFrame)
 print(dataFrame.info())
@@ -145,7 +160,8 @@ while len(data_list) > 0:
 
     csv_data = queue_to_csv(streamed_queue, csv_headers)
     dataFrame = pd.read_csv(csv_data)
-    anomalyResults = zscore_anomaly_detection(dataFrame)
+    anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_df_count)
+    anomaly_df_count = anomalyResults['df_count']
 
     print(dataFrame)
     print(dataFrame.info())
