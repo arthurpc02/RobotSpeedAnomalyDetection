@@ -35,7 +35,10 @@ def queue_to_csv(queue, headers):
 
 def stream_data(queue, input_data, increment=2, queue_max_len=10):
     """ Simulates a continuous data stream """
-    pass
+    for _ in range(increment):
+        new_data = input_data.pop()
+        queue.append(new_data)
+    return
 
 
 def anomaly_detection(dataFrame):
@@ -122,14 +125,27 @@ streamed_queue = deque(maxlen=window_frame)
 fill_window_frame(streamed_queue, data_list, window_frame)
 
 # data_analysis()
-# while len(data_list) > 0:
-# stream_data(streamed_queue, data_list, increment, window_frame)
 
 csv_data = queue_to_csv(streamed_queue, csv_headers)
 dataFrame = pd.read_csv(csv_data)
 anomalyResults = anomaly_detection(dataFrame)
 
+print(dataFrame)
+print(dataFrame.info())
+plot_data_with_anomalies(anomalyResults)
 
+while len(data_list) > 0:
+    stream_data(streamed_queue, data_list, increment, window_frame) 
+
+    csv_data = queue_to_csv(streamed_queue, csv_headers)
+    dataFrame = pd.read_csv(csv_data)
+    anomalyResults = anomaly_detection(dataFrame)
+
+    print(dataFrame)
+    print(dataFrame.info())
+    plot_data_with_anomalies(anomalyResults)
+
+print("end")
 
 ##########################################
 # 2. Anomaly Detection
@@ -143,8 +159,7 @@ anomalyResults = anomaly_detection(dataFrame)
 ##########################################
 
 
-print(dataFrame)
-print(dataFrame.info())
+
 
 # print(anomaly_df)
 # print(anomaly_df.info())
@@ -152,7 +167,7 @@ print(dataFrame.info())
 # print(f'std dev.: {spd_std}')
 # print(f'anomaly count: {anomalyResults[]}')
 
-plot_data_with_anomalies(anomalyResults)
+
 # plot_data_with_anomalies(anomaly_df, spd_mean, spd_std, anomaly_count)
 
 ##########################################
