@@ -4,7 +4,7 @@ from io import StringIO
 import matplotlib.pyplot as plt
 
 
-def receive_data_in_chunks(desiredChunkSize=10000):
+def receive_data_in_chunks(desiredChunkSize=200):
     """Simulates a stream of continuous data"""
 
     chunk = []
@@ -43,19 +43,27 @@ def detect_anomalies_zscore(data, threshold=3):
     return anomaly_df, mean, std
 
 
-def plot_data_with_anomalies(data):
-    """ Plotting the data and  highlighting the anomalies """
+def plot_data_with_anomalies(data, mean, std, anomaly_count):
+    """ Plotting the data and highlighting the anomalies with additional metrics """
 
     plt.figure(figsize=(14, 7))
-    plt.plot(dataFrame.index, anomaly_df['Data'], label='Speed Data', color='blue')
+    plt.plot(data.index, data['Data'], label='Speed Data', color='blue')
 
     # Highlight anomalies
-    plt.scatter(anomaly_df.index[anomaly_df['Anomaly']], 
-                anomaly_df['Data'][anomaly_df['Anomaly']], 
+    plt.scatter(data.index[data['Anomaly']], 
+                data['Data'][data['Anomaly']], 
                 color='red', label='Anomalies', marker='o')
 
+    # Add annotations for mean, std, and anomaly count
+    plt.text(0.81, 1.03, f"Mean: {mean:.2f} | Std Dev: {std:.2f} | Anomaly Count: {anomaly_count}", 
+             horizontalalignment='center', 
+             verticalalignment='center', 
+             transform=plt.gca().transAxes,
+             fontsize=12, 
+             bbox=dict(facecolor='white', alpha=0.5))
+
     # Adding labels and title
-    plt.title('Robot Speed Data with Anomalies Highlighted')
+    plt.title('Robot Speed Data with Anomalies Highlighted', loc='left')
     plt.xlabel('Index')
     plt.ylabel('Speed')
     plt.legend()
@@ -89,7 +97,6 @@ spd_std = anomalies_output[2]
 # 3. Metrics Reporting
 ##########################################
 
-plot_data_with_anomalies(anomaly_df)
 
 print(dataFrame)
 print(dataFrame.info())
@@ -100,6 +107,7 @@ print(f'anomaly count: {anomaly_count}')
 print(f'mean: {spd_mean}')
 print(f'std dev.: {spd_std}')
 
+plot_data_with_anomalies(anomaly_df, spd_mean, spd_std, anomaly_count)
 
 ##########################################
 # 4. Code Submission
