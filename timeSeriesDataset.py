@@ -80,8 +80,8 @@ def detect_anomalies_zscore(df, anomalies_with_timestamp_df=None, threshold=3):
     anomaly_df['Z-Score'] = z_scores
     anomaly_df['Anomaly'] = anomalies
 
-    print(updated_anomalies_with_timestamp_df)
-    print(updated_anomalies_with_timestamp_df.info())
+    # print(updated_anomalies_with_timestamp_df)
+    # print(updated_anomalies_with_timestamp_df.info())
 
     return anomaly_df, mean, std, updated_anomalies_with_timestamp_df
 
@@ -131,33 +131,22 @@ def plot_data_with_anomalies(anomalyResults):
 # 1. Stream Data
 ##########################################
 
-url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
-window_frame = 10000
-increment = 10000
-anomaly_df_count = None
+def main():
+    url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
+    window_frame = 10000
+    increment = 10000
+    anomaly_df_count = None
 
-data_list = receive_data_as_a_list(url)
-csv_headers = data_list.pop(0)
+    data_list = receive_data_as_a_list(url)
+    csv_headers = data_list.pop(0)
 
-streamed_queue = deque(maxlen=window_frame)
+    streamed_queue = deque(maxlen=window_frame)
 
-# in the first run, the increment should be enough to fill the window frame for the analysis
-# so we provide the maxlen of the queue as the increment.
-stream_data(streamed_queue, data_list, window_frame) 
+    # in the first run, the increment should be enough to fill the window frame for the analysis
+    # so we provide the maxlen of the queue as the increment.
+    stream_data(streamed_queue, data_list, increment=window_frame) 
 
-# to do: wrap the data analysis in a function, because it's repeating
-csv_data = queue_to_csv(streamed_queue, csv_headers)
-dataFrame = pd.read_csv(csv_data)
-anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_df_count)
-anomaly_df_count = anomalyResults['df_count']
-
-print(dataFrame)
-print(dataFrame.info())
-plot_data_with_anomalies(anomalyResults)
-
-while len(data_list) > 0: 
-    stream_data(streamed_queue, data_list, increment)  # to do: this function probably breaks in the last elements
-
+    # to do: wrap the data analysis in a function, because it's repeating
     csv_data = queue_to_csv(streamed_queue, csv_headers)
     dataFrame = pd.read_csv(csv_data)
     anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_df_count)
@@ -167,9 +156,21 @@ while len(data_list) > 0:
     print(dataFrame.info())
     plot_data_with_anomalies(anomalyResults)
 
-# to do: final report with all the anomalies detected
+    while len(data_list) > 0: 
+        stream_data(streamed_queue, data_list, increment)  # to do: this function probably breaks in the last elements
 
-print("end")
+        csv_data = queue_to_csv(streamed_queue, csv_headers)
+        dataFrame = pd.read_csv(csv_data)
+        anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_df_count)
+        anomaly_df_count = anomalyResults['df_count']
+
+        print(dataFrame)
+        print(dataFrame.info())
+        plot_data_with_anomalies(anomalyResults)
+
+    # to do: final report with all the anomalies detected
+
+    print("end")
 
 ##########################################
 # 2. Anomaly Detection
@@ -198,3 +199,6 @@ print("end")
 # 4. Code Submission
 ##########################################
 # outside of the .py file
+
+if __name__ == "__main__":
+    main()
