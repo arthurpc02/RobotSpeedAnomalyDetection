@@ -43,6 +43,17 @@ def stream_data(queue, input_data, increment=2):
         queue.append(new_data)
     return
 
+def simulate_continuous_data(data_source, window_size):
+    """ Simulates a continuous data stream by taking only part of a queue """
+
+    window = []
+    for _ in range(window_size):
+        new_data = data_source.popleft()
+        window.append(new_data)
+    return window
+
+
+
 
 def zscore_anomaly_detection(dataFrame, anomaly_dataframe_count):
     anomalies_output = detect_anomalies_zscore(dataFrame, anomaly_dataframe_count)
@@ -147,8 +158,8 @@ def plot_data_with_anomalies(anomalyResults):
 
 def main():
     url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
-    analysisWindow_size = 10000
-    increment = 10000
+    analysisWindow_size = 10
+    # increment = 10000
     anomaly_count_df = None
 
     # data_list = receive_data_as_a_list(url)
@@ -156,14 +167,17 @@ def main():
     csv_headers = data_fifo.popleft()
     
     while len(data_fifo) > analysisWindow_size:
-        analysis_window_df = prepare_analysis_window(analysisWindow_size)
+        analysis_window_list = simulate_continuous_data(data_fifo, analysisWindow_size)
+        print(analysis_window_list)
+        exit()
         analyzed_df = zscore_anomaly_detection(analysis_window_df, anomaly_count_df)
         plot_data_with_anomalies(analyzed_df)
 
-    while len(data_fifo) > 0:
-        analysis_window_df = prepare_analysis_window(len(data_fifo))
-        analyzed_df = zscore_anomaly_detection(analysis_window_df, anomaly_count_df)
-        plot_data_with_anomalies(analyzed_df)
+    # to do:
+    # while len(data_fifo) > 0:
+    #     analysis_window_df = simulate_continuous_data(data_fifo, len(data_fifo))
+    #     analyzed_df = zscore_anomaly_detection(analysis_window_df, anomaly_count_df)
+    #     plot_data_with_anomalies(analyzed_df)
 
     post_results(anomaly_count_df)
 
