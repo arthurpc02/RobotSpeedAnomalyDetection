@@ -35,6 +35,10 @@ def queue_to_csv(queue, headers):
     csv = headers + "\n" + "\n".join(queue)
     return StringIO(csv)
 
+def list_to_csv(list, headers):
+    csv = headers + "\n" + "\n".join(list)
+    return StringIO(csv)
+
 
 def stream_data(queue, input_data, increment=2):
     """ Simulates a continuous data stream """
@@ -168,7 +172,10 @@ def main():
     
     while len(data_fifo) > analysisWindow_size:
         analysis_window_list = simulate_continuous_data(data_fifo, analysisWindow_size)
-        print(analysis_window_list)
+        analysis_windos_csv = list_to_csv(analysis_window_list, csv_headers)
+        analysis_window_df = pd.read_csv(analysis_windos_csv)
+        print(analysis_window_df)
+        print(analysis_window_df.info())
         exit()
         analyzed_df = zscore_anomaly_detection(analysis_window_df, anomaly_count_df)
         plot_data_with_anomalies(analyzed_df)
