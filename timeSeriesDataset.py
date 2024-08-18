@@ -100,7 +100,7 @@ def plot_data_with_anomalies(anomalyResults):
     plt.draw()
 
     # Pause before closing the plot
-    plt.pause(4)
+    plt.pause(5)
     plt.close()
 
 
@@ -109,8 +109,8 @@ def plot_data_with_anomalies(anomalyResults):
 ##########################################
 
 url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
-window_frame = 50
-increment = 10
+window_frame = 10000
+increment = 1000
 
 data_list = receive_data_as_a_list(url)
 csv_headers = data_list.pop(0)
@@ -121,6 +121,7 @@ streamed_queue = deque(maxlen=window_frame)
 # so we provide the maxlen of the queue as the increment.
 stream_data(streamed_queue, data_list, window_frame) 
 
+# to do: wrap the data analysis in a function, because it's repeating
 csv_data = queue_to_csv(streamed_queue, csv_headers)
 dataFrame = pd.read_csv(csv_data)
 anomalyResults = anomaly_detection(dataFrame)
@@ -129,8 +130,8 @@ print(dataFrame)
 print(dataFrame.info())
 plot_data_with_anomalies(anomalyResults)
 
-while len(data_list) > 0:
-    stream_data(streamed_queue, data_list, increment) 
+while len(data_list) > 0: 
+    stream_data(streamed_queue, data_list, increment)  # to do: this function probably breaks in the last elements
 
     csv_data = queue_to_csv(streamed_queue, csv_headers)
     dataFrame = pd.read_csv(csv_data)
@@ -139,6 +140,8 @@ while len(data_list) > 0:
     print(dataFrame)
     print(dataFrame.info())
     plot_data_with_anomalies(anomalyResults)
+
+# to do: final report with all the anomalies detected
 
 print("end")
 
