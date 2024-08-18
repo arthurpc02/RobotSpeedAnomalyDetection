@@ -1,10 +1,11 @@
 import requests
 import pandas as pd
 from io import StringIO
+from collections import deque
 import matplotlib.pyplot as plt
 
 
-def receive_data(url):
+def receive_data_as_a_list(url):
     """ Receive all the data"""
     response = requests.get(url, stream=True)
     response.raise_for_status() # check for errors
@@ -17,25 +18,18 @@ def receive_data(url):
     return data
 
 
-# def stream_data(increment=2, queue_size=10):
+def fill_window_frame(queue, input_data, queue_max_len=10):
+    """ the queue has to be full to start the data analysis """
+
+    while len(queue) < queue_max_len:
+        new_data = input_data.pop()
+        queue.append(new_data)
+    return
 
 
-
-def receive_data_in_chunks(desiredChunkSize=200):
-    """Simulates a stream of continuous data"""
-
-    chunk = []
-
-    url = 'https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv'
-    response = requests.get(url, stream=True)
-
-    for line in response.iter_lines():
-        if line:
-            chunk.append(line.decode('utf-8'))
-        if len(chunk) >= desiredChunkSize:
-            break
-
-    return chunk
+def stream_data(queue, input_data, increment=2, queue_max_len=10):
+    """ Simulates a continuous data stream """
+    pass
 
 
 def detect_anomalies_zscore(data, threshold=3):
@@ -97,8 +91,23 @@ def plot_data_with_anomalies(data, mean, std, anomaly_count):
 ##########################################
 
 url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
-csv_data = "\n".join(receive_data(url))
+window_frame = 10
+increment = 2
+
+data_list = receive_data_as_a_list(url)
+csv_headers = data_list.pop(0)
+
+streamed_queue = deque(maxlen=window_frame)
+fill_window_frame(streamed_queue, data_list, window_frame)
+
+# data_analysis()
+# while len(data_list) > 0:
+# stream_data(streamed_queue, data_list, increment, window_frame)
+
+csv_data = csv_headers + "\n" + "\n".join(streamed_queue)
+print(csv_data)
 dataFrame = pd.read_csv(StringIO(csv_data))
+
 
 ##########################################
 # 2. Anomaly Detection
