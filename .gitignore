@@ -161,6 +161,4 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 time_series_with_anomalies - time_series_with_anomalies.xlsx
-speed_data_with_anomalies.png
-dataValidation_v1.png
-dataValidation_v2.png
+*.png
