@@ -162,8 +162,7 @@ def plot_data_with_anomalies(anomalyResults):
 
 def main():
     url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
-    analysisWindow_size = 10
-    # increment = 10000
+    analysisWindow_size = 1000
     anomaly_count_df = None
 
     # data_list = receive_data_as_a_list(url)
@@ -174,19 +173,15 @@ def main():
         analysis_window_list = simulate_continuous_data(data_fifo, analysisWindow_size)
         analysis_windos_csv = list_to_csv(analysis_window_list, csv_headers)
         analysis_window_df = pd.read_csv(analysis_windos_csv)
-        print(analysis_window_df)
-        print(analysis_window_df.info())
-        exit()
+
         analyzed_df = zscore_anomaly_detection(analysis_window_df, anomaly_count_df)
         plot_data_with_anomalies(analyzed_df)
+        post_results(anomaly_count_df)
 
-    # to do:
-    # while len(data_fifo) > 0:
-    #     analysis_window_df = simulate_continuous_data(data_fifo, len(data_fifo))
-    #     analyzed_df = zscore_anomaly_detection(analysis_window_df, anomaly_count_df)
-    #     plot_data_with_anomalies(analyzed_df)
 
-    post_results(anomaly_count_df)
+    if len(data_fifo) < analysisWindow_size:
+        print("not enough data to analyze. Finishing analysis")
+
 
     exit()
 
