@@ -21,6 +21,7 @@ def receive_data_and_queue_it(url):
 
 def list_to_csv(list, headers):
     """ Prepares a list to become a csv, to be read by pandas."""
+    
     csv = headers + "\n" + "\n".join(list)
     return StringIO(csv)
 
@@ -35,10 +36,10 @@ def simulate_continuous_data(data_source, window_size):
     return window
 
 
-def anomaly_detection(dataFrame):
+def anomaly_detection(dataFrame, threshold):
     """ Detects anomalies."""
 
-    anomalies_output = detect_anomalies_zscore(dataFrame)
+    anomalies_output = detect_anomalies_zscore(dataFrame, threshold)
     anomaly_df = anomalies_output[0]
     spd_mean = anomalies_output[1]
     spd_std = anomalies_output[2]
@@ -140,7 +141,9 @@ def post_results(anomaly_df):
 
 def main():
     url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
+
     analysisWindow_size = 50000
+    analysis_threshold = 5
 
     data_fifo = receive_data_and_queue_it(url)
     csv_headers = data_fifo.popleft()
@@ -150,7 +153,7 @@ def main():
         analysis_windos_csv = list_to_csv(analysis_window_list, csv_headers)
         analysis_window_df = pd.read_csv(analysis_windos_csv)
 
-        analysis_results_dict = anomaly_detection(analysis_window_df)
+        analysis_results_dict = anomaly_detection(analysis_window_df, analysis_threshold)
         validate_anomalies_with_a_chart(analysis_results_dict)
 
         anomaly_df = analysis_results_dict['df_count']
