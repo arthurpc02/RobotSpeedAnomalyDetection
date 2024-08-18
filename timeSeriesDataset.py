@@ -20,7 +20,6 @@ def receive_data_as_a_list(url):
 
 def queue_to_csv(queue, headers):
     csv = headers + "\n" + "\n".join(queue)
-    print(csv)
     return StringIO(csv)
 
 
@@ -98,7 +97,11 @@ def plot_data_with_anomalies(anomalyResults):
     plt.savefig('speed_data_with_anomalies.png')
 
     # Show the plot
-    plt.show()
+    plt.draw()
+
+    # Pause before closing the plot
+    plt.pause(4)
+    plt.close()
 
 
 ##########################################
@@ -106,8 +109,8 @@ def plot_data_with_anomalies(anomalyResults):
 ##########################################
 
 url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
-window_frame = 10
-increment = 2
+window_frame = 50
+increment = 10
 
 data_list = receive_data_as_a_list(url)
 csv_headers = data_list.pop(0)
@@ -117,8 +120,6 @@ streamed_queue = deque(maxlen=window_frame)
 # in the first run, the increment should be enough to fill the window frame for the analysis
 # so we provide the maxlen of the queue as the increment.
 stream_data(streamed_queue, data_list, window_frame) 
-
-# data_analysis()
 
 csv_data = queue_to_csv(streamed_queue, csv_headers)
 dataFrame = pd.read_csv(csv_data)
