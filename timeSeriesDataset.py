@@ -31,34 +31,36 @@ def stream_data(queue, input_data, increment=2):
     return
 
 
-def anomaly_detection(dataFrame):
-    anomalies_output = detect_anomalies_zscore(dataFrame['speed'])
+def zscore_anomaly_detection(dataFrame):
+    anomalies_output = detect_anomalies_zscore(dataFrame)
     anomaly_df = anomalies_output[0]
     spd_mean = anomalies_output[1]
     spd_std = anomalies_output[2]
     anomaly_count = anomaly_df['Anomaly'].sum()
 
-    return {'anomaly_df':anomaly_df, 'mean':spd_mean, 'std':spd_std, 'count':anomaly_count}
+    return {'anomaly_df': anomaly_df, 'mean': spd_mean, 'std': spd_std, 'count': anomaly_count}
 
-
-def detect_anomalies_zscore(data, threshold=3):
+def detect_anomalies_zscore(df, threshold=3):
     """
     Detect anomalies using the Z-score method.
     
     Parameters:
-    - data: A pandas Series containing the time-series data.
+    - df: A pandas DataFrame containing the time-series data.
     - threshold: Z-score threshold for detecting anomalies.
     
     Returns:
-    - A DataFrame with an additional 'Anomaly' column.
+    - A DataFrame with the original columns plus an additional 'Anomaly' column.
     """
+    data = df['speed']
     mean = data.mean()
     std = data.std()
-    
+
     z_scores = (data - mean) / std
     anomalies = z_scores.abs() > threshold
 
-    anomaly_df = pd.DataFrame({'Data': data, 'Z-Score': z_scores, 'Anomaly': anomalies})
+    anomaly_df = df.copy()  # Copy the original DataFrame to include all columns
+    anomaly_df['Z-Score'] = z_scores
+    anomaly_df['Anomaly'] = anomalies
 
     return anomaly_df, mean, std
 
@@ -72,11 +74,11 @@ def plot_data_with_anomalies(anomalyResults):
     anomaly_count = anomalyResults['count']
 
     plt.figure(figsize=(14, 7))
-    plt.plot(data.index, data['Data'], label='Speed Data', color='blue')
+    plt.plot(data.index, data['speed'], label='Speed Data', color='blue')
 
     # Highlight anomalies
     plt.scatter(data.index[data['Anomaly']], 
-                data['Data'][data['Anomaly']], 
+                data['speed'][data['Anomaly']], 
                 color='red', label='Anomalies', marker='o')
 
     # Add annotations for mean, std, and anomaly count
@@ -124,7 +126,7 @@ stream_data(streamed_queue, data_list, window_frame)
 # to do: wrap the data analysis in a function, because it's repeating
 csv_data = queue_to_csv(streamed_queue, csv_headers)
 dataFrame = pd.read_csv(csv_data)
-anomalyResults = anomaly_detection(dataFrame)
+anomalyResults = zscore_anomaly_detection(dataFrame)
 
 print(dataFrame)
 print(dataFrame.info())
@@ -135,7 +137,7 @@ while len(data_list) > 0:
 
     csv_data = queue_to_csv(streamed_queue, csv_headers)
     dataFrame = pd.read_csv(csv_data)
-    anomalyResults = anomaly_detection(dataFrame)
+    anomalyResults = zscore_anomaly_detection(dataFrame)
 
     print(dataFrame)
     print(dataFrame.info())
