@@ -59,8 +59,8 @@ def simulate_continuous_data(data_source, window_size):
 
 
 
-def zscore_anomaly_detection(dataFrame, anomaly_dataframe_count):
-    anomalies_output = detect_anomalies_zscore(dataFrame, anomaly_dataframe_count)
+def zscore_anomaly_detection(dataFrame):
+    anomalies_output = detect_anomalies_zscore(dataFrame)
     anomaly_df = anomalies_output[0]
     spd_mean = anomalies_output[1]
     spd_std = anomalies_output[2]
@@ -70,20 +70,19 @@ def zscore_anomaly_detection(dataFrame, anomaly_dataframe_count):
     return {'anomaly_df': anomaly_df, 'mean': spd_mean, 'std': spd_std, 'count': anomaly_count, 'df_count': anomalies_df_count}
 
 
-def detect_anomalies_zscore(df, anomalies_with_timestamp_df=None, threshold=3):
+def detect_anomalies_zscore(df, threshold=3):
     """
-    Detect anomalies using the Z-score method and append them to the existing anomalies DataFrame.
+    Detect anomalies using the Z-score method.
     
     Parameters:
     - df: A pandas DataFrame containing the time-series data.
-    - anomalies_with_timestamp_df: A DataFrame to which new anomalies will be appended. If None, a new DataFrame is created.
     - threshold: Z-score threshold for detecting anomalies.
     
     Returns:
     - anomaly_df: A DataFrame with the original columns plus an additional 'Anomaly' column.
     - mean: The mean of the 'speed' column.
     - std: The standard deviation of the 'speed' column.
-    - updated_anomalies_with_timestamp_df: The updated DataFrame containing all anomalies with their corresponding timestamps.
+    - anomalies_with_timestamp_df: A DataFrame containing only the anomalies with their corresponding timestamps.
     """
     data = df['speed']
     mean = data.mean()
@@ -92,30 +91,19 @@ def detect_anomalies_zscore(df, anomalies_with_timestamp_df=None, threshold=3):
     z_scores = (data - mean) / std
     anomalies = z_scores.abs() > threshold
 
-    # Extract new anomalies
-    new_anomalies = df[anomalies].copy()
-    new_anomalies['Z-Score'] = z_scores[anomalies]
-    
-    # Initialize the anomalies DataFrame if it's None
-    if anomalies_with_timestamp_df is None:
-        anomalies_with_timestamp_df = pd.DataFrame(columns=df.columns)
-        anomalies_with_timestamp_df['Z-Score'] = pd.Series(dtype='float64')
-    
-    # Append new anomalies to the existing DataFrame
-    updated_anomalies_with_timestamp_df = pd.concat([anomalies_with_timestamp_df, new_anomalies])
+    # Create a DataFrame with anomalies and corresponding timestamps
+    anomalies_with_timestamp_df = df[anomalies].copy()
+    anomalies_with_timestamp_df['Z-Score'] = z_scores[anomalies]
     
     # Add 'Z-Score' and 'Anomaly' columns to the original DataFrame
     anomaly_df = df.copy()
     anomaly_df['Z-Score'] = z_scores
     anomaly_df['Anomaly'] = anomalies
 
-    # print(updated_anomalies_with_timestamp_df)
-    # print(updated_anomalies_with_timestamp_df.info())
-
-    return anomaly_df, mean, std, updated_anomalies_with_timestamp_df
+    return anomaly_df, mean, std, anomalies_with_timestamp_df
 
 
-def plot_data_with_anomalies(anomalyResults):
+def validate_anomalies_with_a_chart(anomalyResults):
     """ Plotting the data and highlighting the anomalies with additional metrics """
 
     data = anomalyResults['anomaly_df']
@@ -156,6 +144,15 @@ def plot_data_with_anomalies(anomalyResults):
     plt.close()
 
 
+def post_results(anomaly_df):
+    
+    print(anomaly_df)
+    print(anomaly_df.info())
+
+    # to do: 
+    # simulatePost()
+
+
 ##########################################
 # 1. Stream Data
 ##########################################
@@ -163,7 +160,6 @@ def plot_data_with_anomalies(anomalyResults):
 def main():
     url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
     analysisWindow_size = 1000
-    anomaly_count_df = None
 
     # data_list = receive_data_as_a_list(url)
     data_fifo = receive_data_and_queue_it(url)
@@ -174,10 +170,11 @@ def main():
         analysis_windos_csv = list_to_csv(analysis_window_list, csv_headers)
         analysis_window_df = pd.read_csv(analysis_windos_csv)
 
-        analyzed_df = zscore_anomaly_detection(analysis_window_df, anomaly_count_df)
-        plot_data_with_anomalies(analyzed_df)
-        post_results(anomaly_count_df)
+        analysis_results_dict = zscore_anomaly_detection(analysis_window_df)
+        validate_anomalies_with_a_chart(analysis_results_dict)
 
+        anomaly_df = analysis_results_dict['df_count']
+        post_results(anomaly_df)
 
     if len(data_fifo) < analysisWindow_size:
         print("not enough data to analyze. Finishing analysis")
@@ -191,7 +188,6 @@ def main():
     # so we provide the maxlen of the queue as the increment.
     stream_data(streamed_queue, data_list, increment=analysisWindow_size) 
 
-    # to do: wrap the data analysis in a function, because it's repeating
     csv_data = queue_to_csv(streamed_queue, csv_headers)
     dataFrame = pd.read_csv(csv_data)
     anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_count_df)
@@ -199,10 +195,10 @@ def main():
 
     print(dataFrame)
     print(dataFrame.info())
-    plot_data_with_anomalies(anomalyResults)
+    validate_anomalies_with_a_chart(anomalyResults)
 
     while len(data_list) > 0: 
-        stream_data(streamed_queue, data_list, increment)  # to do: this function probably breaks in the last elements
+        stream_data(streamed_queue, data_list, increment) 
 
         csv_data = queue_to_csv(streamed_queue, csv_headers)
         dataFrame = pd.read_csv(csv_data)
@@ -211,9 +207,7 @@ def main():
 
         print(dataFrame)
         print(dataFrame.info())
-        plot_data_with_anomalies(anomalyResults)
-
-    # to do: final report with all the anomalies detected
+        validate_anomalies_with_a_chart(anomalyResults)
 
     print("end")
 
@@ -238,7 +232,7 @@ def main():
 # print(f'anomaly count: {anomalyResults[]}')
 
 
-# plot_data_with_anomalies(anomaly_df, spd_mean, spd_std, anomaly_count)
+# validate_anomalies_with_a_chart(anomaly_df, spd_mean, spd_std, anomaly_count)
 
 ##########################################
 # 4. Code Submission
