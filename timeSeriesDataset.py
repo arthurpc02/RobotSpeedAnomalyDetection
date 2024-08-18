@@ -27,6 +27,12 @@ def fill_window_frame(queue, input_data, queue_max_len=10):
     return
 
 
+def queue_to_csv(queue, headers):
+    csv = headers + "\n" + "\n".join(queue)
+    print(csv)
+    return StringIO(csv)
+
+
 def stream_data(queue, input_data, increment=2, queue_max_len=10):
     """ Simulates a continuous data stream """
     pass
@@ -104,9 +110,9 @@ fill_window_frame(streamed_queue, data_list, window_frame)
 # while len(data_list) > 0:
 # stream_data(streamed_queue, data_list, increment, window_frame)
 
-csv_data = csv_headers + "\n" + "\n".join(streamed_queue)
-print(csv_data)
-dataFrame = pd.read_csv(StringIO(csv_data))
+csv_data = queue_to_csv(streamed_queue, csv_headers)
+dataFrame = pd.read_csv(csv_data)
+
 
 
 ##########################################
