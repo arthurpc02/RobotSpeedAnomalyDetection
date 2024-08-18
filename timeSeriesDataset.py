@@ -18,22 +18,13 @@ def receive_data_as_a_list(url):
     return data
 
 
-def fill_window_frame(queue, input_data, queue_max_len=10):
-    """ the queue has to be full to start the data analysis """
-
-    while len(queue) < queue_max_len:
-        new_data = input_data.pop()
-        queue.append(new_data)
-    return
-
-
 def queue_to_csv(queue, headers):
     csv = headers + "\n" + "\n".join(queue)
     print(csv)
     return StringIO(csv)
 
 
-def stream_data(queue, input_data, increment=2, queue_max_len=10):
+def stream_data(queue, input_data, increment=2):
     """ Simulates a continuous data stream """
     for _ in range(increment):
         new_data = input_data.pop()
@@ -122,7 +113,10 @@ data_list = receive_data_as_a_list(url)
 csv_headers = data_list.pop(0)
 
 streamed_queue = deque(maxlen=window_frame)
-fill_window_frame(streamed_queue, data_list, window_frame)
+
+# in the first run, the increment should be enough to fill the window frame for the analysis
+# so we provide the maxlen of the queue as the increment.
+stream_data(streamed_queue, data_list, window_frame) 
 
 # data_analysis()
 
@@ -135,7 +129,7 @@ print(dataFrame.info())
 plot_data_with_anomalies(anomalyResults)
 
 while len(data_list) > 0:
-    stream_data(streamed_queue, data_list, increment, window_frame) 
+    stream_data(streamed_queue, data_list, increment) 
 
     csv_data = queue_to_csv(streamed_queue, csv_headers)
     dataFrame = pd.read_csv(csv_data)
