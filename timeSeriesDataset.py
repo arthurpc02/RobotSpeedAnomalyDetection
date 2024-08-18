@@ -4,6 +4,23 @@ from io import StringIO
 import matplotlib.pyplot as plt
 
 
+def receive_data(url):
+    """ Receive all the data"""
+    response = requests.get(url, stream=True)
+    response.raise_for_status() # check for errors
+
+    data = []
+    for line in response.iter_lines():
+        if line:
+            data.append(line.decode('utf-8'))
+        
+    return data
+
+
+# def stream_data(increment=2, queue_size=10):
+
+
+
 def receive_data_in_chunks(desiredChunkSize=200):
     """Simulates a stream of continuous data"""
 
@@ -79,18 +96,19 @@ def plot_data_with_anomalies(data, mean, std, anomaly_count):
 # 1. Stream Data
 ##########################################
 
-csv_data = "\n".join(receive_data_in_chunks())
+url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
+csv_data = "\n".join(receive_data(url))
 dataFrame = pd.read_csv(StringIO(csv_data))
 
 ##########################################
 # 2. Anomaly Detection
 ##########################################
 
-anomalies_output = detect_anomalies_zscore(dataFrame['speed'])
-anomaly_df = anomalies_output[0]
-anomaly_count = anomaly_df['Anomaly'].sum()
-spd_mean = anomalies_output[1]
-spd_std = anomalies_output[2]
+# anomalies_output = detect_anomalies_zscore(dataFrame['speed'])
+# anomaly_df = anomalies_output[0]
+# anomaly_count = anomaly_df['Anomaly'].sum()
+# spd_mean = anomalies_output[1]
+# spd_std = anomalies_output[2]
 
 
 ##########################################
@@ -103,11 +121,11 @@ print(dataFrame.info())
 
 # print(anomaly_df)
 # print(anomaly_df.info())
-print(f'anomaly count: {anomaly_count}')
-print(f'mean: {spd_mean}')
-print(f'std dev.: {spd_std}')
+# print(f'anomaly count: {anomaly_count}')
+# print(f'mean: {spd_mean}')
+# print(f'std dev.: {spd_std}')
 
-plot_data_with_anomalies(anomaly_df, spd_mean, spd_std, anomaly_count)
+# plot_data_with_anomalies(anomaly_df, spd_mean, spd_std, anomaly_count)
 
 ##########################################
 # 4. Code Submission
