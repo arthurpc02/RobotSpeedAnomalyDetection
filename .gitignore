@@ -162,3 +162,5 @@ cython_debug/
 #.idea/
 time_series_with_anomalies - time_series_with_anomalies.xlsx
 speed_data_with_anomalies.png
+dataValidation_v1.png
+dataValidation_v2.png

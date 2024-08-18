@@ -30,22 +30,10 @@ def receive_data_and_queue_it(url):
     return queue
 
 
-
-def queue_to_csv(queue, headers):
-    csv = headers + "\n" + "\n".join(queue)
-    return StringIO(csv)
-
 def list_to_csv(list, headers):
     csv = headers + "\n" + "\n".join(list)
     return StringIO(csv)
 
-
-def stream_data(queue, input_data, increment=2):
-    """ Simulates a continuous data stream """
-    for _ in range(increment):
-        new_data = input_data.pop()
-        queue.append(new_data)
-    return
 
 def simulate_continuous_data(data_source, window_size):
     """ Simulates a continuous data stream by taking only part of a queue """
@@ -70,7 +58,7 @@ def zscore_anomaly_detection(dataFrame):
     return {'anomaly_df': anomaly_df, 'mean': spd_mean, 'std': spd_std, 'count': anomaly_count, 'df_count': anomalies_df_count}
 
 
-def detect_anomalies_zscore(df, threshold=3):
+def detect_anomalies_zscore(df, threshold=5):
     """
     Detect anomalies using the Z-score method.
     
@@ -136,32 +124,29 @@ def validate_anomalies_with_a_chart(anomalyResults):
     # Save the plot as an image file
     plt.savefig('speed_data_with_anomalies.png')
 
-    # Show the plot
-    plt.draw()
+    print(anomalyResults['df_count'])
+    print(anomalyResults['df_count'].info())
 
-    # Pause before closing the plot
-    plt.pause(5)
-    plt.close()
+    # Show the plot and wait for it to be closed
+    plt.show()
+
+    # show the plot and hold it for some seconds
+    # plt.draw()
+    # plt.pause(10)
+    # plt.close()
 
 
 def post_results(anomaly_df):
-    
-    print(anomaly_df)
-    print(anomaly_df.info())
-
+    """ Simulate a POST request to a flask server"""
     # to do: 
-    # simulatePost()
 
+    pass
 
-##########################################
-# 1. Stream Data
-##########################################
 
 def main():
     url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
-    analysisWindow_size = 1000
+    analysisWindow_size = 50000
 
-    # data_list = receive_data_as_a_list(url)
     data_fifo = receive_data_and_queue_it(url)
     csv_headers = data_fifo.popleft()
     
@@ -179,65 +164,7 @@ def main():
     if len(data_fifo) < analysisWindow_size:
         print("not enough data to analyze. Finishing analysis")
 
-
     exit()
-
-    # streamed_queue = deque(maxlen=analysisWindow_size)
-
-    # in the first run, the increment should be enough to fill the window frame for the analysis
-    # so we provide the maxlen of the queue as the increment.
-    stream_data(streamed_queue, data_list, increment=analysisWindow_size) 
-
-    csv_data = queue_to_csv(streamed_queue, csv_headers)
-    dataFrame = pd.read_csv(csv_data)
-    anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_count_df)
-    anomaly_count_df = anomalyResults['df_count']
-
-    print(dataFrame)
-    print(dataFrame.info())
-    validate_anomalies_with_a_chart(anomalyResults)
-
-    while len(data_list) > 0: 
-        stream_data(streamed_queue, data_list, increment) 
-
-        csv_data = queue_to_csv(streamed_queue, csv_headers)
-        dataFrame = pd.read_csv(csv_data)
-        anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_count_df)
-        anomaly_count_df = anomalyResults['df_count']
-
-        print(dataFrame)
-        print(dataFrame.info())
-        validate_anomalies_with_a_chart(anomalyResults)
-
-    print("end")
-
-##########################################
-# 2. Anomaly Detection
-##########################################
-
-
-
-
-##########################################
-# 3. Metrics Reporting
-##########################################
-
-
-
-
-# print(anomaly_df)
-# print(anomaly_df.info())
-# print(f'mean: {spd_mean}')
-# print(f'std dev.: {spd_std}')
-# print(f'anomaly count: {anomalyResults[]}')
-
-
-# validate_anomalies_with_a_chart(anomaly_df, spd_mean, spd_std, anomaly_count)
-
-##########################################
-# 4. Code Submission
-##########################################
-# outside of the .py file
 
 if __name__ == "__main__":
     main()
