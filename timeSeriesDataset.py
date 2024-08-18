@@ -147,27 +147,39 @@ def plot_data_with_anomalies(anomalyResults):
 
 def main():
     url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
-    window_frame = 10000
+    analysisWindow_size = 10000
     increment = 10000
-    anomaly_df_count = None
+    anomaly_count_df = None
 
     # data_list = receive_data_as_a_list(url)
     data_fifo = receive_data_and_queue_it(url)
     csv_headers = data_fifo.popleft()
-    print(csv_headers)
+    
+    while len(data_fifo) > analysisWindow_size:
+        analysis_window_df = prepare_analysis_window(analysisWindow_size)
+        analyzed_df = zscore_anomaly_detection(analysis_window_df, anomaly_count_df)
+        plot_data_with_anomalies(analyzed_df)
+
+    while len(data_fifo) > 0:
+        analysis_window_df = prepare_analysis_window(len(data_fifo))
+        analyzed_df = zscore_anomaly_detection(analysis_window_df, anomaly_count_df)
+        plot_data_with_anomalies(analyzed_df)
+
+    post_results(anomaly_count_df)
+
     exit()
 
-    # streamed_queue = deque(maxlen=window_frame)
+    # streamed_queue = deque(maxlen=analysisWindow_size)
 
     # in the first run, the increment should be enough to fill the window frame for the analysis
     # so we provide the maxlen of the queue as the increment.
-    stream_data(streamed_queue, data_list, increment=window_frame) 
+    stream_data(streamed_queue, data_list, increment=analysisWindow_size) 
 
     # to do: wrap the data analysis in a function, because it's repeating
     csv_data = queue_to_csv(streamed_queue, csv_headers)
     dataFrame = pd.read_csv(csv_data)
-    anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_df_count)
-    anomaly_df_count = anomalyResults['df_count']
+    anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_count_df)
+    anomaly_count_df = anomalyResults['df_count']
 
     print(dataFrame)
     print(dataFrame.info())
@@ -178,8 +190,8 @@ def main():
 
         csv_data = queue_to_csv(streamed_queue, csv_headers)
         dataFrame = pd.read_csv(csv_data)
-        anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_df_count)
-        anomaly_df_count = anomalyResults['df_count']
+        anomalyResults = zscore_anomaly_detection(dataFrame, anomaly_count_df)
+        anomaly_count_df = anomalyResults['df_count']
 
         print(dataFrame)
         print(dataFrame.info())
