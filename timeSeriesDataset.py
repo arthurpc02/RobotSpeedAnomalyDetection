@@ -4,21 +4,10 @@ from io import StringIO
 from collections import deque
 import matplotlib.pyplot as plt
 
-# to do: remove unused functions to a cemetery file
-def receive_data_as_a_list(url):
-    """ Receive all the data"""
-    response = requests.get(url, stream=True)
-    response.raise_for_status() # check for errors
-
-    data = []
-    for line in response.iter_lines():
-        if line:
-            data.append(line.decode('utf-8'))
-        
-    return data
 
 def receive_data_and_queue_it(url):
-    """ Receive all the data and puts it in a FIFO queue. """
+    """ Receive all the data and puts it in a FIFO queue, to simulate a continuous stream."""
+
     response = requests.get(url, stream=True)
     response.raise_for_status() # check for errors
 
@@ -31,12 +20,13 @@ def receive_data_and_queue_it(url):
 
 
 def list_to_csv(list, headers):
+    """ Prepares a list to become a csv, to be read by pandas."""
     csv = headers + "\n" + "\n".join(list)
     return StringIO(csv)
 
 
 def simulate_continuous_data(data_source, window_size):
-    """ Simulates a continuous data stream by taking only part of a queue """
+    """ Simulates a continuous data stream by taking only part of the data available in the queue."""
 
     window = []
     for _ in range(window_size):
@@ -45,9 +35,9 @@ def simulate_continuous_data(data_source, window_size):
     return window
 
 
+def anomaly_detection(dataFrame):
+    """ Detects anomalies."""
 
-
-def zscore_anomaly_detection(dataFrame):
     anomalies_output = detect_anomalies_zscore(dataFrame)
     anomaly_df = anomalies_output[0]
     spd_mean = anomalies_output[1]
@@ -55,7 +45,11 @@ def zscore_anomaly_detection(dataFrame):
     anomaly_count = anomaly_df['Anomaly'].sum()
     anomalies_df_count = anomalies_output[3]
 
-    return {'anomaly_df': anomaly_df, 'mean': spd_mean, 'std': spd_std, 'count': anomaly_count, 'df_count': anomalies_df_count}
+    return {'anomaly_df': anomaly_df,
+             'mean': spd_mean,
+             'std': spd_std,
+             'count': anomaly_count,
+             'df_count': anomalies_df_count}
 
 
 def detect_anomalies_zscore(df, threshold=5):
@@ -72,6 +66,7 @@ def detect_anomalies_zscore(df, threshold=5):
     - std: The standard deviation of the 'speed' column.
     - anomalies_with_timestamp_df: A DataFrame containing only the anomalies with their corresponding timestamps.
     """
+
     data = df['speed']
     mean = data.mean()
     std = data.std()
@@ -92,7 +87,7 @@ def detect_anomalies_zscore(df, threshold=5):
 
 
 def validate_anomalies_with_a_chart(anomalyResults):
-    """ Plotting the data and highlighting the anomalies with additional metrics """
+    """ Plotting the data and highlighting the anomalies with additional metrics. """
 
     data = anomalyResults['anomaly_df']
     mean = anomalyResults['mean']
@@ -155,7 +150,7 @@ def main():
         analysis_windos_csv = list_to_csv(analysis_window_list, csv_headers)
         analysis_window_df = pd.read_csv(analysis_windos_csv)
 
-        analysis_results_dict = zscore_anomaly_detection(analysis_window_df)
+        analysis_results_dict = anomaly_detection(analysis_window_df)
         validate_anomalies_with_a_chart(analysis_results_dict)
 
         anomaly_df = analysis_results_dict['df_count']
