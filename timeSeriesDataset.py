@@ -38,6 +38,16 @@ def stream_data(queue, input_data, increment=2, queue_max_len=10):
     pass
 
 
+def anomaly_detection(dataFrame):
+    anomalies_output = detect_anomalies_zscore(dataFrame['speed'])
+    anomaly_df = anomalies_output[0]
+    spd_mean = anomalies_output[1]
+    spd_std = anomalies_output[2]
+    anomaly_count = anomaly_df['Anomaly'].sum()
+
+    return {'anomaly_df':anomaly_df, 'mean':spd_mean, 'std':spd_std, 'count':anomaly_count}
+
+
 def detect_anomalies_zscore(data, threshold=3):
     """
     Detect anomalies using the Z-score method.
@@ -60,8 +70,13 @@ def detect_anomalies_zscore(data, threshold=3):
     return anomaly_df, mean, std
 
 
-def plot_data_with_anomalies(data, mean, std, anomaly_count):
+def plot_data_with_anomalies(anomalyResults):
     """ Plotting the data and highlighting the anomalies with additional metrics """
+
+    data = anomalyResults['anomaly_df']
+    mean = anomalyResults['mean']
+    std = anomalyResults['std']
+    anomaly_count = anomalyResults['count']
 
     plt.figure(figsize=(14, 7))
     plt.plot(data.index, data['Data'], label='Speed Data', color='blue')
@@ -112,6 +127,7 @@ fill_window_frame(streamed_queue, data_list, window_frame)
 
 csv_data = queue_to_csv(streamed_queue, csv_headers)
 dataFrame = pd.read_csv(csv_data)
+anomalyResults = anomaly_detection(dataFrame)
 
 
 
@@ -119,11 +135,7 @@ dataFrame = pd.read_csv(csv_data)
 # 2. Anomaly Detection
 ##########################################
 
-# anomalies_output = detect_anomalies_zscore(dataFrame['speed'])
-# anomaly_df = anomalies_output[0]
-# anomaly_count = anomaly_df['Anomaly'].sum()
-# spd_mean = anomalies_output[1]
-# spd_std = anomalies_output[2]
+
 
 
 ##########################################
@@ -136,10 +148,11 @@ print(dataFrame.info())
 
 # print(anomaly_df)
 # print(anomaly_df.info())
-# print(f'anomaly count: {anomaly_count}')
 # print(f'mean: {spd_mean}')
 # print(f'std dev.: {spd_std}')
+# print(f'anomaly count: {anomalyResults[]}')
 
+plot_data_with_anomalies(anomalyResults)
 # plot_data_with_anomalies(anomaly_df, spd_mean, spd_std, anomaly_count)
 
 ##########################################
