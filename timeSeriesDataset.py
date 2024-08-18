@@ -21,7 +21,7 @@ def receive_data_and_queue_it(url):
 
 def list_to_csv(list, headers):
     """ Prepares a list to become a csv, to be read by pandas."""
-    
+
     csv = headers + "\n" + "\n".join(list)
     return StringIO(csv)
 
@@ -39,18 +39,18 @@ def simulate_continuous_data(data_source, window_size):
 def anomaly_detection(dataFrame, threshold):
     """ Detects anomalies."""
 
-    anomalies_output = detect_anomalies_zscore(dataFrame, threshold)
-    anomaly_df = anomalies_output[0]
-    spd_mean = anomalies_output[1]
-    spd_std = anomalies_output[2]
-    anomaly_count = anomaly_df['Anomaly'].sum()
-    anomalies_df_count = anomalies_output[3]
+    zscore_output = detect_anomalies_zscore(dataFrame, threshold)
+    zscore_df = zscore_output[0]
+    spd_mean = zscore_output[1]
+    spd_std = zscore_output[2]
+    anomaly_count = zscore_df['Anomaly'].sum()
+    anomalies_df = zscore_output[3]
 
-    return {'anomaly_df': anomaly_df,
+    return {'zscore_df': zscore_df,
              'mean': spd_mean,
              'std': spd_std,
              'count': anomaly_count,
-             'df_count': anomalies_df_count}
+             'anomaly_df': anomalies_df}
 
 
 def detect_anomalies_zscore(df, threshold=5):
@@ -62,7 +62,7 @@ def detect_anomalies_zscore(df, threshold=5):
     - threshold: Z-score threshold for detecting anomalies.
     
     Returns:
-    - anomaly_df: A DataFrame with the original columns plus an additional 'Anomaly' column.
+    - zscore_df: A DataFrame with the original columns plus an additional 'Anomaly' column.
     - mean: The mean of the 'speed' column.
     - std: The standard deviation of the 'speed' column.
     - anomalies_with_timestamp_df: A DataFrame containing only the anomalies with their corresponding timestamps.
@@ -80,17 +80,17 @@ def detect_anomalies_zscore(df, threshold=5):
     anomalies_with_timestamp_df['Z-Score'] = z_scores[anomalies]
     
     # Add 'Z-Score' and 'Anomaly' columns to the original DataFrame
-    anomaly_df = df.copy()
-    anomaly_df['Z-Score'] = z_scores
-    anomaly_df['Anomaly'] = anomalies
+    zscore_df = df.copy()
+    zscore_df['Z-Score'] = z_scores
+    zscore_df['Anomaly'] = anomalies
 
-    return anomaly_df, mean, std, anomalies_with_timestamp_df
+    return zscore_df, mean, std, anomalies_with_timestamp_df
 
 
 def validate_anomalies_with_a_chart(anomalyResults):
     """ Plotting the data and highlighting the anomalies with additional metrics. """
 
-    data = anomalyResults['anomaly_df']
+    data = anomalyResults['zscore_df']
     mean = anomalyResults['mean']
     std = anomalyResults['std']
     anomaly_count = anomalyResults['count']
@@ -120,8 +120,8 @@ def validate_anomalies_with_a_chart(anomalyResults):
     # Save the plot as an image file
     plt.savefig('speed_data_with_anomalies.png')
 
-    print(anomalyResults['df_count'])
-    print(anomalyResults['df_count'].info())
+    print(anomalyResults['anomaly_df'])
+    print(anomalyResults['anomaly_df'].info())
 
     # Show the plot and wait for it to be closed
     plt.show()
@@ -140,11 +140,11 @@ def post_results(anomaly_df):
 
 
 def main():
-    url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
 
-    analysisWindow_size = 50000
+    analysisWindow_size = 100000
     analysis_threshold = 5
 
+    url = "https://docs.google.com/spreadsheets/d/19galjYSqCDf6Ohb0IWv6YsRL7MV0EPFpN-2blGGS97U/pub?output=csv"
     data_fifo = receive_data_and_queue_it(url)
     csv_headers = data_fifo.popleft()
     
@@ -156,7 +156,7 @@ def main():
         analysis_results_dict = anomaly_detection(analysis_window_df, analysis_threshold)
         validate_anomalies_with_a_chart(analysis_results_dict)
 
-        anomaly_df = analysis_results_dict['df_count']
+        anomaly_df = analysis_results_dict['anomaly_df']
         post_results(anomaly_df)
 
     if len(data_fifo) < analysisWindow_size:
