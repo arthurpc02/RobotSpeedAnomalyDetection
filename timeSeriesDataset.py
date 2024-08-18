@@ -4,7 +4,7 @@ from io import StringIO
 from collections import deque
 import matplotlib.pyplot as plt
 
-
+# to do: remove unused functions to a cemetery file
 def receive_data_as_a_list(url):
     """ Receive all the data"""
     response = requests.get(url, stream=True)
@@ -16,6 +16,19 @@ def receive_data_as_a_list(url):
             data.append(line.decode('utf-8'))
         
     return data
+
+def receive_data_and_queue_it(url):
+    """ Receive all the data and puts it in a FIFO queue. """
+    response = requests.get(url, stream=True)
+    response.raise_for_status() # check for errors
+
+    queue = deque()
+    for line in response.iter_lines():
+        if line:
+            queue.append(line.decode('utf-8'))
+        
+    return queue
+
 
 
 def queue_to_csv(queue, headers):
@@ -40,6 +53,7 @@ def zscore_anomaly_detection(dataFrame, anomaly_dataframe_count):
     anomalies_df_count = anomalies_output[3]
 
     return {'anomaly_df': anomaly_df, 'mean': spd_mean, 'std': spd_std, 'count': anomaly_count, 'df_count': anomalies_df_count}
+
 
 def detect_anomalies_zscore(df, anomalies_with_timestamp_df=None, threshold=3):
     """
@@ -137,10 +151,13 @@ def main():
     increment = 10000
     anomaly_df_count = None
 
-    data_list = receive_data_as_a_list(url)
-    csv_headers = data_list.pop(0)
+    # data_list = receive_data_as_a_list(url)
+    data_fifo = receive_data_and_queue_it(url)
+    csv_headers = data_fifo.popleft()
+    print(csv_headers)
+    exit()
 
-    streamed_queue = deque(maxlen=window_frame)
+    # streamed_queue = deque(maxlen=window_frame)
 
     # in the first run, the increment should be enough to fill the window frame for the analysis
     # so we provide the maxlen of the queue as the increment.
