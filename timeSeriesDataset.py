@@ -111,15 +111,17 @@ def validate_anomalies_with_a_chart(anomalyResults):
              fontsize=12, 
              bbox=dict(facecolor='white', alpha=0.5))
 
+    # keeps track of how many analysis were performed
+    global plot_counter
+    plot_counter += 1
+
     # Adding labels and title
-    plt.title('Robot Speed Data with Anomalies Highlighted', loc='left')
+    plt.title(f'Robot Speed Data (Analysis num. {plot_counter})', loc='left')
     plt.xlabel('Index')
     plt.ylabel('Speed')
     plt.legend()
 
     # Save the plot as an image file
-    global plot_counter
-    plot_counter += 1
     plt.savefig(f'speed_data_with_anomalies_{plot_counter}.png')
 
 
