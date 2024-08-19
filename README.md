@@ -37,7 +37,8 @@ Now, to reach this conclusion, I used two outputs for metrics and validation: Ta
 #### 1. Tables: Printed logs of the anomalies identified and their timestamps
 All the anomalies and their timestamps are logged in the output screen. Since the analysis is performed multiple times until it goes through all the data, multiple tables will be printed (please check the number of the analysis in the beginning of the table output). The tables present columns "timestamp", "speed" and "Z-score".
 #### 2. Charts
-Some images(.png) will be saved in the app's root folder. They represent the speed reading, and the anomalies are highlighted. In the upper right corner the mean, std deviation, and anomaly count are present. These charts serve as the validation step, where we can see if the anomalies make sense. Again, multiple images will be there, check the filename to know
+Some images(.png) will be saved in the app's root folder. They represent the speed reading, and the anomalies are highlighted. In the upper right corner the mean, std deviation, and anomaly count are present. These charts serve as the validation step, where we can see if the anomalies make sense. Again, multiple images will be there, check the filename to find out the corresponding analysis number.
+
 ![images_saved_in_root](https://github.com/user-attachments/assets/4264a3f6-77d7-4f21-b13a-51f378a8926e)
 
 ### 4. Code Submission
