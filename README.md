@@ -1,8 +1,12 @@
 # Robot Speed Anomaly Detection
 This project aims to detect anomalies in the speed sensor readings of a real robot.
-The speed sensor readings are served through an online CSV file. The data is parsed using a queue, in a way that it can be applied to continuous data streams. Data is fetched in chunks from the queue and analyzed.
-The anomalies are detected through a Z-score analysis. The timestamp of each anomaly is recorded and charts are plotted for validation. In the charts we can see that when the speed reading is too high or too low, it is highlighted as an anomaly.
-This analysis concluded that not all anomalies might be issues with the sensor or with the reading process, but they should be flagged anyway and used for further studies.
+- **Data**: The speed sensor readings are served through an online CSV file. The data is parsed using a queue, in a way that it can be applied to continuous data streams. Data is fetched in chunks from the queue and analyzed.
+- **Analysis**: The anomalies are detected through a Z-score analysis.
+- **Validation**: The timestamp of each anomaly is recorded and charts are plotted for validation. In the charts we can see that when the speed reading is too high or too low, it is highlighted as an anomaly.
+- **Results**: This analysis concluded that not all anomalies might be issues with the sensor or with the reading process, but they should be flagged anyway and used for further studies.
+
+![image](https://github.com/user-attachments/assets/f651ada4-c5df-409a-b94c-c7634fa794d8)
+
 
 ## Instructions:
 1. clone the repository
