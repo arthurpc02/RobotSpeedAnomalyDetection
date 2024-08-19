@@ -122,6 +122,9 @@ def validate_anomalies_with_a_chart(anomalyResults):
     plot_counter += 1
     plt.savefig(f'speed_data_with_anomalies_{plot_counter}.png')
 
+
+    print("################################# ")
+    print(f"This is the analysis number {plot_counter}: ")
     print(anomalyResults['anomaly_df'])
     print(anomalyResults['anomaly_df'].info())
 
@@ -163,6 +166,7 @@ def main():
 
     if len(data_fifo) < analysisWindow_size:
         print("Finishing analysis: not enough data to analyze. ")
+        print(f"Check the app folder for the {plot_counter} .png images generated for validation.")
 
     exit()
 
