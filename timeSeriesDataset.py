@@ -3,7 +3,7 @@ import pandas as pd
 from io import StringIO
 from collections import deque
 import matplotlib.pyplot as plt
-
+plot_counter = 0
 
 def receive_data_and_queue_it(url):
     """ Receive all the data and puts it in a FIFO queue, to simulate a continuous stream."""
@@ -118,7 +118,9 @@ def validate_anomalies_with_a_chart(anomalyResults):
     plt.legend()
 
     # Save the plot as an image file
-    plt.savefig('speed_data_with_anomalies.png')
+    global plot_counter
+    plot_counter += 1
+    plt.savefig(f'speed_data_with_anomalies_{plot_counter}.png')
 
     print(anomalyResults['anomaly_df'])
     print(anomalyResults['anomaly_df'].info())
@@ -138,7 +140,7 @@ def post_results(anomaly_df):
 
     pass
 
-
+ 
 def main():
 
     analysisWindow_size = 100000
@@ -160,7 +162,7 @@ def main():
         post_results(anomaly_df)
 
     if len(data_fifo) < analysisWindow_size:
-        print("not enough data to analyze. Finishing analysis")
+        print("Finishing analysis: not enough data to analyze. ")
 
     exit()
 
