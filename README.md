@@ -1,6 +1,4 @@
 # TimeSeriesDataset
-Assignment for the Simulation and Validation position at Serve Robotics.
-
 ## Instructions:
 1. clone the repository
 2. Build the image with the command: `docker build -t my_anomaly_detection_image .`
