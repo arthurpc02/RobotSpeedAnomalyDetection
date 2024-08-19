@@ -165,7 +165,7 @@ def main():
         post_results(anomaly_df)
 
     if len(data_fifo) < analysisWindow_size:
-        print("Finishing analysis: not enough data to analyze. ")
+        print("Finished analysis: not enough data to analyze. ")
         print(f"Check the app folder for the {plot_counter} .png images generated for validation.")
 
     exit()
